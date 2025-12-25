@@ -15,8 +15,9 @@ export const fileToGenerativePart = async (file: File): Promise<string> => {
   });
 };
 
+
 const getAiClient = () => {
-  const apiKey = process.env.API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("API Key not found in environment variables");
   }
@@ -26,7 +27,7 @@ const getAiClient = () => {
 // 1. Image Analysis (Nutrition) using gemini-3-pro-preview
 export const analyzeFoodImage = async (base64Image: string, mimeType: string) => {
   const ai = getAiClient();
-  
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
@@ -56,7 +57,7 @@ export const analyzeFoodImage = async (base64Image: string, mimeType: string) =>
         }
       }
     });
-    
+
     return JSON.parse(response.text || "{}");
   } catch (error) {
     console.error("Analysis Error:", error);

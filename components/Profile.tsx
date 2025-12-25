@@ -1,26 +1,16 @@
 import React, { useState } from 'react';
-import { ActivityLevel, Gender, UserProfile } from '../types';
+import { ActivityLevel, Gender, UserProfile, WeightData } from '../types';
 import { ICONS } from '../constants';
 import { WeightChart } from './WeightChart';
 
 interface ProfileProps {
   data: UserProfile;
+  weightHistory: WeightData[];
   onSave: (data: UserProfile) => void;
   onAdminAccess: () => void;
 }
 
-// Mock weight history data
-const WEIGHT_HISTORY = [
-  { date: '10/24', weight: 71.5 },
-  { date: '10/25', weight: 71.2 },
-  { date: '10/26', weight: 71.0 },
-  { date: '10/27', weight: 70.8 },
-  { date: '10/28', weight: 70.5 },
-  { date: '10/29', weight: 70.2 },
-  { date: '今日', weight: 70.0 },
-];
-
-export const Profile: React.FC<ProfileProps> = ({ data, onSave, onAdminAccess }) => {
+export const Profile: React.FC<ProfileProps> = ({ data, weightHistory, onSave, onAdminAccess }) => {
   const [formData, setFormData] = useState<UserProfile>(data);
   const [isSaved, setIsSaved] = useState(false);
 
@@ -50,15 +40,15 @@ export const Profile: React.FC<ProfileProps> = ({ data, onSave, onAdminAccess })
         {/* Weight Trend Section */}
         <div className="p-6 border-b border-slate-100 bg-slate-50/50">
           <div className="flex justify-between items-center mb-4">
-             <h3 className="font-bold text-slate-700 flex items-center gap-2">
-               {ICONS.Activity} 體重趨勢 (近 7 天)
-             </h3>
-             <span className="text-xs text-primary-600 bg-primary-50 px-2 py-1 rounded-full font-bold">
-               目標: {formData.weight - 5} kg
-             </span>
+            <h3 className="font-bold text-slate-700 flex items-center gap-2">
+              {ICONS.Activity} 體重趨勢 (近 7 天)
+            </h3>
+            <span className="text-xs text-primary-600 bg-primary-50 px-2 py-1 rounded-full font-bold">
+              目標: {formData.weight - 5} kg
+            </span>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2">
-            <WeightChart data={WEIGHT_HISTORY} targetWeight={formData.weight - 5} />
+            <WeightChart data={weightHistory} targetWeight={formData.weight - 5} />
           </div>
         </div>
 
@@ -72,18 +62,17 @@ export const Profile: React.FC<ProfileProps> = ({ data, onSave, onAdminAccess })
                     type="button"
                     key={g}
                     onClick={() => handleChange('gender', g)}
-                    className={`flex-1 py-3 rounded-xl border-2 font-medium transition-all ${
-                      formData.gender === g 
-                        ? 'border-primary-500 bg-primary-50 text-primary-700' 
+                    className={`flex-1 py-3 rounded-xl border-2 font-medium transition-all ${formData.gender === g
+                        ? 'border-primary-500 bg-primary-50 text-primary-700'
                         : 'border-slate-100 text-slate-500 hover:border-slate-200'
-                    }`}
+                      }`}
                   >
                     {g}
                   </button>
                 ))}
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">年齡</label>
               <input
@@ -132,8 +121,8 @@ export const Profile: React.FC<ProfileProps> = ({ data, onSave, onAdminAccess })
           <button
             type="submit"
             className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition-all transform active:scale-95 flex justify-center items-center gap-2
-              ${isSaved 
-                ? 'bg-emerald-500 text-white shadow-emerald-500/30' 
+              ${isSaved
+                ? 'bg-emerald-500 text-white shadow-emerald-500/30'
                 : 'bg-slate-800 text-white hover:bg-slate-900 shadow-slate-800/30'
               }`}
           >
@@ -144,7 +133,7 @@ export const Profile: React.FC<ProfileProps> = ({ data, onSave, onAdminAccess })
 
       {/* Hidden Admin Entry */}
       <div className="text-center mt-8">
-        <button 
+        <button
           onClick={onAdminAccess}
           className="text-slate-400 text-xs font-medium hover:text-primary-600 hover:underline transition-colors flex items-center justify-center gap-1 mx-auto"
         >

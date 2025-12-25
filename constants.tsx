@@ -1,14 +1,14 @@
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  UtensilsCrossed, 
-  UserCircle, 
-  Activity, 
-  Droplets, 
-  Flame, 
-  MapPin, 
-  Camera, 
-  Wand2, 
+import {
+  LayoutDashboard,
+  UtensilsCrossed,
+  UserCircle,
+  Activity,
+  Droplets,
+  Flame,
+  MapPin,
+  Camera,
+  Wand2,
   Loader2,
   ChevronRight,
   Upload,
@@ -30,7 +30,8 @@ import {
   LogOut,
   MoreHorizontal,
   Moon,
-  List
+  List,
+  X
 } from 'lucide-react';
 import { MealRecommendation, TaskCategory, TaskItem } from './types';
 
@@ -65,7 +66,8 @@ export const ICONS = {
   Logout: <LogOut className="w-5 h-5" />,
   More: <MoreHorizontal className="w-4 h-4" />,
   Moon: <Moon className="w-5 h-5" />,
-  List: <List className="w-4 h-4" />
+  List: <List className="w-4 h-4" />,
+  Close: <X className="w-4 h-4" />
 };
 
 export const MOCK_STATS = {
@@ -132,7 +134,7 @@ export const MOCK_MEALS: MealRecommendation[] = [
     distance: 1.2,
     calories: 580,
     macros: { protein: 35, fat: 18, carbs: 60 },
-    imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a7270028d?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
     price: 220
   },
   {

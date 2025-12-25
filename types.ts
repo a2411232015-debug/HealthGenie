@@ -25,6 +25,11 @@ export interface DailyStats {
   water: { current: number; target: number };
 }
 
+export interface WeightData {
+  date: string;
+  weight: number;
+}
+
 export interface MealRecommendation {
   id: string;
   name: string;

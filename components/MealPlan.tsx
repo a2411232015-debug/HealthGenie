@@ -25,7 +25,7 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
     onlyHighProtein: false,
     excludeNuts: false,
   });
-  
+
   // Draft state for modal interaction
   const [draftFilters, setDraftFilters] = useState<FilterState>(filters);
 
@@ -42,7 +42,7 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
       .filter(meal => {
         // 1. Existing Calorie Budget Logic
         const fitsCalorieBudget = meal.calories <= remainingBudget || meal.calories <= 400;
-        
+
         // 2. Price Filter
         const fitsPrice = meal.price <= filters.maxPrice;
 
@@ -54,7 +54,7 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
 
         // 5. Exclude Nuts (Simple keyword check in name since no ingredient list)
         const nutKeywords = ['堅果', '花生', '腰果', '杏仁', '核桃'];
-        const hasNuts = filters.excludeNuts 
+        const hasNuts = filters.excludeNuts
           ? nutKeywords.some(keyword => meal.name.includes(keyword))
           : false;
 
@@ -107,7 +107,7 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
           </p>
         </div>
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={openFilterModal}
             className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
           >
@@ -123,17 +123,17 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                <SlidersHorizontal className="w-5 h-5 text-primary-600" /> 
+                <SlidersHorizontal className="w-5 h-5 text-primary-600" />
                 篩選偏好
               </h3>
-              <button 
-                onClick={() => setIsFilterOpen(false)} 
+              <button
+                onClick={() => setIsFilterOpen(false)}
                 className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-200 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-6">
               {/* Price Slider */}
               <div className="space-y-3">
@@ -143,13 +143,13 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
                     ${draftFilters.maxPrice}
                   </span>
                 </div>
-                <input 
-                  type="range" 
-                  min="50" 
-                  max="500" 
+                <input
+                  type="range"
+                  min="50"
+                  max="500"
                   step="10"
                   value={draftFilters.maxPrice}
-                  onChange={(e) => setDraftFilters({...draftFilters, maxPrice: Number(e.target.value)})}
+                  onChange={(e) => setDraftFilters({ ...draftFilters, maxPrice: Number(e.target.value) })}
                   className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
                 />
                 <div className="flex justify-between text-xs text-slate-400">
@@ -166,13 +166,13 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
                     {draftFilters.maxDistance} km
                   </span>
                 </div>
-                <input 
-                  type="range" 
-                  min="0.5" 
-                  max="5" 
+                <input
+                  type="range"
+                  min="0.5"
+                  max="5"
                   step="0.1"
                   value={draftFilters.maxDistance}
-                  onChange={(e) => setDraftFilters({...draftFilters, maxDistance: Number(e.target.value)})}
+                  onChange={(e) => setDraftFilters({ ...draftFilters, maxDistance: Number(e.target.value) })}
                   className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
                 />
                 <div className="flex justify-between text-xs text-slate-400">
@@ -184,19 +184,19 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
               {/* Toggles */}
               <div className="space-y-3 pt-2 border-t border-slate-100">
                 <label className="text-sm font-bold text-slate-700 mb-2 block">飲食偏好</label>
-                
+
                 <label className="flex items-center justify-between p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className={`w-5 h-5 rounded flex items-center justify-center border ${draftFilters.onlyHighProtein ? 'bg-primary-600 border-primary-600 text-white' : 'border-slate-300 bg-white'}`}>
                       {draftFilters.onlyHighProtein && <Check className="w-3.5 h-3.5" />}
                     </div>
-                    <span className="text-sm font-medium text-slate-700">僅顯示高蛋白餐點 (>25g)</span>
+                    <span className="text-sm font-medium text-slate-700">僅顯示高蛋白餐點 (&gt;25g)</span>
                   </div>
-                  <input 
-                    type="checkbox" 
-                    className="hidden" 
+                  <input
+                    type="checkbox"
+                    className="hidden"
                     checked={draftFilters.onlyHighProtein}
-                    onChange={(e) => setDraftFilters({...draftFilters, onlyHighProtein: e.target.checked})}
+                    onChange={(e) => setDraftFilters({ ...draftFilters, onlyHighProtein: e.target.checked })}
                   />
                 </label>
 
@@ -207,24 +207,24 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
                     </div>
                     <span className="text-sm font-medium text-slate-700">排除堅果類</span>
                   </div>
-                  <input 
-                    type="checkbox" 
-                    className="hidden" 
+                  <input
+                    type="checkbox"
+                    className="hidden"
                     checked={draftFilters.excludeNuts}
-                    onChange={(e) => setDraftFilters({...draftFilters, excludeNuts: e.target.checked})}
+                    onChange={(e) => setDraftFilters({ ...draftFilters, excludeNuts: e.target.checked })}
                   />
                 </label>
               </div>
             </div>
 
             <div className="p-4 bg-slate-50 flex gap-3">
-              <button 
+              <button
                 onClick={() => setIsFilterOpen(false)}
                 className="flex-1 py-3 text-slate-600 font-bold bg-white border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors"
               >
                 取消
               </button>
-              <button 
+              <button
                 onClick={applyFilters}
                 className="flex-1 py-3 text-white font-bold bg-primary-600 rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-500/30 transition-all active:scale-95"
               >
@@ -241,7 +241,7 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
           <div className="text-4xl mb-4">🍽️</div>
           <h3 className="text-slate-600 font-bold">找不到符合條件的餐點</h3>
           <p className="text-slate-400 text-sm mt-2">請嘗試放寬篩選條件，例如增加預算或距離。</p>
-          <button 
+          <button
             onClick={() => setFilters({ maxPrice: 500, maxDistance: 5, onlyHighProtein: false, excludeNuts: false })}
             className="mt-4 text-primary-600 font-medium hover:underline"
           >
@@ -254,9 +254,9 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
             <div key={meal.id} className="group bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 flex flex-col">
               {/* Image Section */}
               <div className="relative h-48 overflow-hidden bg-slate-100">
-                <img 
-                  src={meal.imageUrl} 
-                  alt={meal.name} 
+                <img
+                  src={meal.imageUrl}
+                  alt={meal.name}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   loading="lazy"
                 />
@@ -277,7 +277,7 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
                   <div>
                     <h3 className="font-bold text-slate-800 text-lg leading-tight mb-1">{meal.name}</h3>
                     <p className="text-slate-500 text-sm flex items-center gap-1">
-                       {meal.merchant}
+                      {meal.merchant}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-1.5">
@@ -285,7 +285,7 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
                       ${meal.price}
                     </span>
                     <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
-                       {ICONS.Delivery} 可外送
+                      {ICONS.Delivery} 可外送
                     </div>
                   </div>
                 </div>
@@ -301,17 +301,17 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
                 </div>
 
                 <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
-                   <div className="text-xs text-slate-400 flex items-center gap-1">
-                      <Info className="w-3 h-3" />
-                      C:{meal.macros.carbs}g F:{meal.macros.fat}g
-                   </div>
-                   <button 
+                  <div className="text-xs text-slate-400 flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    C:{meal.macros.carbs}g F:{meal.macros.fat}g
+                  </div>
+                  <button
                     onClick={() => handleNavigation(meal.name, meal.merchant)}
                     className="bg-slate-900 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-                   >
-                     <Navigation className="w-3 h-3" />
-                     導航前往
-                   </button>
+                  >
+                    <Navigation className="w-3 h-3" />
+                    導航前往
+                  </button>
                 </div>
               </div>
             </div>
