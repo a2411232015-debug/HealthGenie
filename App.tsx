@@ -59,8 +59,9 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Check for API key on mount to show helpful error if missing
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-    if (!apiKey) {
+    const envKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+    const localKey = localStorage.getItem('gemini_api_key');
+    if (!envKey && !localKey) {
       setApiKeyMissing(true);
     }
   }, []);
@@ -141,12 +142,45 @@ const App: React.FC = () => {
   if (apiKeyMissing) {
     return (
       <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-8">
-        <div className="max-w-md text-center">
-          <h1 className="text-3xl font-bold mb-4 text-red-500">API Key Missing</h1>
-          <p className="text-slate-300">
-            請確保環境變數中包含 <code>API_KEY</code>。<br />
-            This app requires a valid Google Gemini API Key to function.
+        <div className="max-w-md w-full bg-slate-800 p-8 rounded-xl shadow-2xl">
+          <h1 className="text-3xl font-bold mb-4 text-primary-400">Welcome to HealthGenie</h1>
+          <p className="text-slate-300 mb-6">
+            To use this app, please enter your Google Gemini API Key.
           </p>
+
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const form = e.target as HTMLFormElement;
+            const input = form.elements.namedItem('apiKey') as HTMLInputElement;
+            if (input.value.trim()) {
+              localStorage.setItem('gemini_api_key', input.value.trim());
+              setApiKeyMissing(false);
+              window.location.reload();
+            }
+          }} className="space-y-4">
+            <div>
+              <label htmlFor="apiKey" className="block text-sm font-medium text-slate-400 mb-1">
+                Gemini API Key
+              </label>
+              <input
+                type="password"
+                name="apiKey"
+                id="apiKey"
+                required
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="AIza..."
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+            >
+              Start App
+            </button>
+            <p className="text-xs text-slate-500 text-center mt-4">
+              Your key is stored locally in your browser.
+            </p>
+          </form>
         </div>
       </div>
     );

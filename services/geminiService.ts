@@ -17,9 +17,9 @@ export const fileToGenerativePart = async (file: File): Promise<string> => {
 
 
 const getAiClient = () => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
   if (!apiKey) {
-    throw new Error("API Key not found in environment variables");
+    throw new Error("API Key not found in environment variables or localStorage");
   }
   return new GoogleGenAI({ apiKey });
 };
