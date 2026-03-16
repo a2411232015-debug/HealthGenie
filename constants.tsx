@@ -31,7 +31,8 @@ import {
   MoreHorizontal,
   Moon,
   List,
-  X
+  X,
+  ShoppingCart
 } from 'lucide-react';
 import { MealRecommendation, TaskCategory, TaskItem } from './types';
 
@@ -67,7 +68,8 @@ export const ICONS = {
   More: <MoreHorizontal className="w-4 h-4" />,
   Moon: <Moon className="w-5 h-5" />,
   List: <List className="w-4 h-4" />,
-  Close: <X className="w-4 h-4" />
+  Close: <X className="w-4 h-4" />,
+  ShoppingCart: <ShoppingCart className="w-5 h-5" />
 };
 
 export const MOCK_STATS = {

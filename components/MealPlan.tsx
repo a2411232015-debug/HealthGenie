@@ -291,11 +291,11 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
                 </div>
 
                 {/* Macros Tags */}
-                <div className="flex gap-2 mb-4 text-xs text-slate-600">
-                  <span className="bg-orange-50 text-orange-700 px-2 py-1 rounded border border-orange-100">
+                <div className="flex gap-2 mb-4 text-xs font-semibold">
+                  <span className="bg-orange-50 text-orange-600 px-2 py-1 rounded">
                     🔥 {meal.calories} kcal
                   </span>
-                  <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100">
+                  <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded">
                     🥩 P: {meal.macros.protein}g
                   </span>
                 </div>
@@ -307,7 +307,7 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
                   </div>
                   <button
                     onClick={() => handleNavigation(meal.name, meal.merchant)}
-                    className="bg-slate-900 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                    className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
                   >
                     <Navigation className="w-3 h-3" />
                     導航前往

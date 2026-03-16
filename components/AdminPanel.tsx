@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import { ICONS } from '../constants';
 import { MealRecommendation } from '../types';
-import { Phone, Save, Check } from 'lucide-react';
+import { Phone, Save, Check, Trash2 } from 'lucide-react';
 
 interface AdminPanelProps {
   meals: MealRecommendation[];
   onAddMeal: (meal: MealRecommendation) => void;
   onUpdateMeal: (meal: MealRecommendation) => void;
+  onDeleteMeal: (mealId: string) => void;
   onBack: () => void;
 }
 
 type AdminView = 'analytics' | 'menu' | 'store';
 type MenuMode = 'manual' | 'ai';
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ meals, onAddMeal, onUpdateMeal, onBack }) => {
+export const AdminPanel: React.FC<AdminPanelProps> = ({ meals, onAddMeal, onUpdateMeal, onDeleteMeal, onBack }) => {
   const [currentView, setCurrentView] = useState<AdminView>('menu');
 
   // --- Store Profile State ---
@@ -46,6 +47,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ meals, onAddMeal, onUpda
     fat: '',
     carbs: '',
     imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
+    imageFile: null as File | null,
   });
 
   // --- Actions ---
@@ -71,7 +73,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ meals, onAddMeal, onUpda
         protein: '42',
         fat: '12',
         carbs: '45',
-        imageUrl: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=800&q=80'
+        imageUrl: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=800&q=80',
+        imageFile: null
       });
       setIsAnalyzing(false);
       setReviewMode(true);
@@ -79,7 +82,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ meals, onAddMeal, onUpda
     }, 3000);
   };
 
-  const handleEditClick = (meal: MealRecommendation) => {
+  const cancelEdit = () => {
+    setEditingId(null);
+    setForm({
+      name: '',
+      merchant: storeProfile.name,
+      calories: '',
+      price: '',
+      protein: '',
+      fat: '',
+      carbs: '',
+      imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
+      imageFile: null,
+    });
+    setReviewMode(false);
+  };
+
+  const handleCardClick = (meal: MealRecommendation) => {
+    if (editingId === meal.id) {
+       cancelEdit();
+       return;
+    }
     setEditingId(meal.id);
     setForm({
       name: meal.name,
@@ -89,10 +112,76 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ meals, onAddMeal, onUpda
       protein: meal.macros.protein.toString(),
       fat: meal.macros.fat.toString(),
       carbs: meal.macros.carbs.toString(),
-      imageUrl: meal.imageUrl
+      imageUrl: meal.imageUrl,
+      imageFile: null
     });
     setMenuMode('manual');
-    setActiveDropdownId(null);
+    setReviewMode(false);
+  };
+
+  // --- Image Compression Utility ---
+  const compressImage = (file: File, maxWidth = 800, quality = 0.7): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+             height = Math.round((height * maxWidth) / width);
+             width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = (error) => reject(error);
+        if (event.target?.result) {
+          img.src = event.target.result as string;
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert('圖片檔案過大，請上傳小於 10MB 的圖片');
+        return;
+      }
+
+      try {
+        // Compress image before setting state
+        const compressedBase64 = await compressImage(file);
+        
+        // TODO: Replace Base64 conversion with proper API upload to cloud storage
+        setForm(prev => ({
+          ...prev,
+          imageUrl: compressedBase64, // Store Compressed Base64 string
+          imageFile: file // Keep file reference if needed
+        }));
+      } catch (error) {
+         console.error('Error compressing image:', error);
+         alert('圖片處理失敗，請換一張圖片試試');
+      }
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -113,6 +202,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ meals, onAddMeal, onUpda
       }
     };
 
+    // Simulate sending File object:
+    if (form.imageFile) {
+      console.log('Ready to upload file to backend:', form.imageFile);
+      // const formData = new FormData(); 
+      // formData.append('image', form.imageFile);
+      // await uploadImage(formData);
+    }
+
     if (editingId) {
       onUpdateMeal(mealData);
       alert('餐點修改成功！');
@@ -122,10 +219,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ meals, onAddMeal, onUpda
     }
 
     // Reset
-    setForm({ ...form, name: '', calories: '', price: '' });
-    setReviewMode(false);
+    cancelEdit();
     setImportUrl('');
-    setEditingId(null);
+  };
+
+  const handleDelete = (e: React.MouseEvent, mealId: string) => {
+    e.stopPropagation(); // 防止觸發外層的 handleCardClick
+    if (window.confirm('確定要刪除此餐點嗎？')) {
+      onDeleteMeal(mealId);
+      if (editingId === mealId) {
+        cancelEdit();
+      }
+    }
   };
 
   // --- Sub-Components (Render Functions) ---
@@ -512,17 +617,31 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ meals, onAddMeal, onUpda
 
               <form id="meal-form" onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">餐點圖片 URL</label>
-                  <div className="flex gap-2">
-                    <input
-                      id="meal-image-url"
-                      type="text"
-                      required
-                      value={form.imageUrl}
-                      onChange={e => setForm({ ...form, imageUrl: e.target.value })}
-                      className="flex-1 p-2 border border-slate-200 rounded-lg text-sm bg-slate-50"
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">餐點圖片 (Image Preview)</label>
+                  <div className="border-2 border-dashed border-teal-200 bg-teal-50/30 rounded-xl p-4 flex flex-col items-center justify-center gap-3 transition-colors hover:bg-teal-50">
+                    {form.imageUrl ? (
+                      <div className="relative w-full h-32 rounded-lg overflow-hidden border border-teal-100 shadow-sm">
+                        <img src={form.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center text-teal-500">
+                        {ICONS.Upload}
+                      </div>
+                    )}
+                    
+                    <input 
+                      type="file"
+                      id="image-upload"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
                     />
-                    <button type="button" className="p-2 bg-slate-100 rounded-lg text-slate-500 hover:bg-slate-200">{ICONS.Upload}</button>
+                    <label 
+                      htmlFor="image-upload"
+                      className="cursor-pointer bg-white text-teal-600 border border-teal-200 font-bold px-4 py-2 rounded-lg hover:bg-teal-50 hover:border-teal-300 transition-colors shadow-sm text-sm"
+                    >
+                      從裝置上傳圖片
+                    </label>
                   </div>
                 </div>
 
@@ -585,13 +704,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ meals, onAddMeal, onUpda
 
                 <button
                   type="submit"
-                  className={`w-full py-3 rounded-xl font-bold transition-all mt-2 shadow-lg ${reviewMode
-                    ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/30'
-                    : 'bg-slate-800 hover:bg-slate-900 text-white shadow-slate-800/30'
+                  className={`w-full py-3 rounded-xl font-bold transition-all mt-2 shadow-sm ${reviewMode
+                    ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                    : 'bg-teal-500 hover:bg-teal-600 text-white'
                     }`}
                 >
-                  {editingId ? '確認修改' : (reviewMode ? '確認無誤，立即上架' : '確認上架')}
+                  {editingId ? '儲存修改' : (reviewMode ? '確認無誤，立即上架' : '確認上架')}
                 </button>
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    className="w-full py-3 rounded-xl font-bold transition-all text-gray-500 bg-gray-100 hover:bg-gray-200 mt-2"
+                  >
+                    取消編輯
+                  </button>
+                )}
               </form>
             </div>
           )}
@@ -604,45 +732,39 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ meals, onAddMeal, onUpda
             <span className="bg-white border border-slate-200 px-2 py-0.5 rounded text-xs text-slate-500 font-mono">Total: {meals.length}</span>
           </div>
           <div className="overflow-y-auto flex-1 p-2 space-y-2">
-            {meals.slice().reverse().map((meal, index) => (
-              <div key={meal.id} className="flex gap-3 items-start p-3 bg-white hover:bg-slate-50 rounded-xl border border-slate-100 group transition-colors relative">
-                <img src={meal.imageUrl} alt={meal.name} className="w-16 h-16 rounded-lg object-cover bg-slate-100" />
+            {meals.slice().reverse().map((meal, index) => {
+              const isActive = editingId === meal.id;
+              return (
+              <div 
+                key={meal.id} 
+                onClick={() => handleCardClick(meal)}
+                className={`flex gap-3 items-start p-3 rounded-xl border transition-colors relative cursor-pointer group ${
+                  isActive 
+                    ? 'border-teal-500 bg-teal-50 ring-1 ring-teal-500' 
+                    : 'bg-white hover:bg-gray-50 border-gray-100'
+                }`}
+              >
+                <img src={meal.imageUrl} alt={meal.name} className="w-16 h-16 rounded-lg object-cover bg-gray-100 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
-                    <h4 className="font-bold text-slate-800 truncate text-sm">{meal.name}</h4>
-                    <div className="relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveDropdownId(activeDropdownId === meal.id ? null : meal.id);
-                        }}
-                        className="text-slate-300 hover:text-slate-600 p-1"
-                      >
-                        {ICONS.More}
-                      </button>
-
-                      {activeDropdownId === meal.id && (
-                        <div className="dropdown-menu absolute right-0 top-6 bg-white border border-slate-200 rounded-lg shadow-xl z-10 w-32 py-1 flex flex-col">
-                          <button
-                            className="text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 w-full flex items-center gap-2"
-                            onClick={() => handleEditClick(meal)}
-                          >
-                            <span className="w-4 flex justify-center">{ICONS.Sparkles}</span> 編輯
-                          </button>
-                          <button className="text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 w-full flex items-center gap-2">
-                            <span className="w-4 flex justify-center">{ICONS.Close}</span> 刪除
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <h4 className={`font-bold truncate text-sm pr-2 ${isActive ? 'text-teal-900' : 'text-gray-800'}`}>
+                      {meal.name}
+                    </h4>
+                    <button
+                      onClick={(e) => handleDelete(e, meal.id)}
+                      className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      title="刪除"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">${meal.price} · {meal.calories} kcal</p>
+                  <p className={`text-xs mt-0.5 ${isActive ? 'text-teal-700' : 'text-gray-500'}`}>${meal.price} · {meal.calories} kcal</p>
 
                   {/* Status Badge Simulation */}
                   <div className="mt-2 flex gap-1">
                     {index === 0 ? (
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-600 border border-amber-100">
-                        {ICONS.Alert} 審核中
+                        {ICONS.Alert} 最新
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-600 border border-emerald-100">
@@ -652,7 +774,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ meals, onAddMeal, onUpda
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </div>
       </div>

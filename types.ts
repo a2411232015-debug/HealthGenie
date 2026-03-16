@@ -57,6 +57,7 @@ export enum AppTab {
   MEAL_PLAN = 'meal_plan',
   PROFILE = 'profile',
   ADMIN = 'admin',
+  SHOPPING_CART = 'shopping_cart',
 }
 
 export enum TaskCategory {

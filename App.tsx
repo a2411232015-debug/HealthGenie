@@ -4,6 +4,7 @@ import { Dashboard } from './components/Dashboard';
 import { MealPlan } from './components/MealPlan';
 import { Profile } from './components/Profile';
 import { AdminPanel } from './components/AdminPanel';
+import ShoppingCart from './components/ShoppingCart';
 import { ActivityLevel, AppTab, Gender, UserProfile, MealRecommendation, DailyStats, WeightData } from './types';
 import { MOCK_MEALS, MOCK_STATS } from './constants';
 
@@ -108,6 +109,8 @@ const App: React.FC = () => {
         );
       case AppTab.MEAL_PLAN:
         return <MealPlan userProfile={userProfile} meals={meals} />;
+      case AppTab.SHOPPING_CART:
+        return <ShoppingCart />;
       case AppTab.PROFILE:
         return (
           <Profile
@@ -124,6 +127,9 @@ const App: React.FC = () => {
             onAddMeal={handleAddMeal}
             onUpdateMeal={(updatedMeal) => {
               setMeals(prev => prev.map(m => m.id === updatedMeal.id ? updatedMeal : m));
+            }}
+            onDeleteMeal={(mealId) => {
+              setMeals(prev => prev.filter(m => m.id !== mealId));
             }}
             onBack={() => setCurrentTab(AppTab.DASHBOARD)}
           />

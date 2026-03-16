@@ -19,11 +19,11 @@ const NavItem: React.FC<{
     onClick={onClick}
     className={`w-full flex items-center gap-3 px-6 py-4 transition-all duration-300 border-r-4
       ${isActive 
-        ? 'border-primary-500 bg-primary-50 text-primary-700 font-bold' 
-        : 'border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50 font-medium'
+        ? 'border-teal-500 bg-teal-50 text-teal-600 font-bold' 
+        : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50 font-medium'
       }`}
   >
-    <span className={isActive ? 'text-primary-500' : ''}>{icon}</span>
+    <span className={isActive ? 'text-teal-600' : ''}>{icon}</span>
     <span>{label}</span>
   </button>
 );
@@ -32,10 +32,10 @@ export const Layout: React.FC<LayoutProps> = ({ currentTab, onTabChange, childre
   return (
     <div className="flex min-h-screen bg-slate-50">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex w-64 bg-white flex-col border-r border-slate-200 fixed h-full z-10">
+      <aside className="hidden md:flex w-64 bg-white flex-col border-r border-gray-200 fixed h-full z-10">
         <div className="p-8 pb-4">
-          <div className="flex items-center gap-2 text-primary-600 font-black text-2xl tracking-tight">
-            <span className="bg-primary-600 text-white p-1 rounded-lg">{ICONS.Activity}</span>
+          <div className="flex items-center gap-2 text-teal-600 font-black text-2xl tracking-tight">
+            <span className="bg-teal-500 text-white p-1 rounded-lg">{ICONS.Activity}</span>
             HealthGenie
           </div>
         </div>
@@ -54,6 +54,13 @@ export const Layout: React.FC<LayoutProps> = ({ currentTab, onTabChange, childre
             icon={ICONS.MealPlan} 
             isActive={currentTab === AppTab.MEAL_PLAN} 
             onClick={() => onTabChange(AppTab.MEAL_PLAN)} 
+          />
+          <NavItem 
+            tab={AppTab.SHOPPING_CART} 
+            label="購物車" 
+            icon={ICONS.ShoppingCart} 
+            isActive={currentTab === AppTab.SHOPPING_CART} 
+            onClick={() => onTabChange(AppTab.SHOPPING_CART)} 
           />
           <NavItem 
             tab={AppTab.PROFILE} 
@@ -75,13 +82,14 @@ export const Layout: React.FC<LayoutProps> = ({ currentTab, onTabChange, childre
         {[
           { tab: AppTab.DASHBOARD, label: "概覽", icon: ICONS.Dashboard },
           { tab: AppTab.MEAL_PLAN, label: "推薦", icon: ICONS.MealPlan },
+          { tab: AppTab.SHOPPING_CART, label: "購物車", icon: ICONS.ShoppingCart },
           { tab: AppTab.PROFILE, label: "設定", icon: ICONS.Profile },
         ].map(item => (
           <button
             key={item.tab}
             onClick={() => onTabChange(item.tab)}
             className={`flex flex-col items-center p-2 rounded-xl w-20 transition-all ${
-              currentTab === item.tab ? 'text-primary-600 bg-primary-50' : 'text-slate-400'
+              currentTab === item.tab ? 'text-teal-600 bg-teal-50' : 'text-gray-500'
             }`}
           >
             {item.icon}
