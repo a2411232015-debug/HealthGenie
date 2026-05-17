@@ -16,6 +16,7 @@ export interface UserProfile {
   age: number;
   height: number;
   weight: number;
+  targetWeight?: number;
   activityLevel: ActivityLevel;
 }
 
@@ -40,6 +41,9 @@ export interface MealRecommendation {
     protein: number;
     fat: number;
     carbs: number;
+    sugar: number;
+    sodium: number;
+    fiber: number;
   };
   imageUrl: string;
   price: number;
@@ -58,6 +62,7 @@ export enum AppTab {
   PROFILE = 'profile',
   ADMIN = 'admin',
   SHOPPING_CART = 'shopping_cart',
+  CHECKOUT = 'checkout',
 }
 
 export enum TaskCategory {

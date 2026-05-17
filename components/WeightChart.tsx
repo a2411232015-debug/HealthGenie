@@ -11,8 +11,8 @@ interface WeightChartProps {
 }
 
 export const WeightChart: React.FC<WeightChartProps> = ({ data, targetWeight }) => {
-  // Chart dimensions
-  const width = 600;
+  // SVG viewBox Base size (內部自適應比例)
+  const width = 800;
   const height = 300;
   const padding = 40;
   
@@ -33,8 +33,8 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data, targetWeight }) 
   const areaD = `${pathD} L ${width - padding} ${height - padding} L ${padding} ${height - padding} Z`;
 
   return (
-    <div className="w-full overflow-hidden">
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto drop-shadow-sm">
+    <div className="w-full relative overflow-hidden flex items-center justify-center py-2">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto max-h-[300px] drop-shadow-sm">
         <defs>
           <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#10b981" stopOpacity="0.2" />
@@ -91,11 +91,12 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data, targetWeight }) 
             <circle 
               cx={xScale(i)} 
               cy={yScale(d.weight)} 
-              r="4" 
+              r={data.length > 30 ? "2" : "4"} 
               fill="white" 
               stroke="#10b981" 
-              strokeWidth="2"
-              className="group-hover:r-6 transition-all duration-300"
+              strokeWidth={data.length > 30 ? "1.5" : "2"}
+              className="transition-all duration-300 cursor-pointer"
+              style={{ transition: 'r 0.3s ease' }}
             />
             {/* Tooltip on hover (simple svg text) */}
             <g className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -119,16 +120,18 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data, targetWeight }) 
                </text>
             </g>
             
-            {/* X Axis Labels */}
-            <text 
-              x={xScale(i)} 
-              y={height - 15} 
-              textAnchor="middle" 
-              fill="#94a3b8" 
-              fontSize="12"
-            >
-              {d.date}
-            </text>
+            {/* X Axis Labels (動態抽樣標籤，防止擠壓) */}
+            {(data.length <= 14 || i % Math.ceil(data.length / 8) === 0 || i === data.length - 1) && (
+              <text 
+                x={xScale(i)} 
+                y={height - 15} 
+                textAnchor="middle" 
+                fill="#94a3b8" 
+                fontSize={data.length > 30 ? "10" : "12"}
+              >
+                {d.date}
+              </text>
+            )}
           </g>
         ))}
       </svg>

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Plus, Minus } from 'lucide-react';
+import { Trash2, Plus, Minus, AlertTriangle } from 'lucide-react';
+import { generateHealthWarnings } from '../utils/health';
 
 // --- Mock Data ---
 const MOCK_DATA = [
@@ -11,9 +12,12 @@ const MOCK_DATA = [
         id: 'p1',
         name: '舒肥雞胸藜麥餐盒',
         variant: '450 kcal, P: 42g',
-        price: 160,
+        price: 210,
         quantity: 1,
-        imageUrl: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=80&q=80'
+        imageUrl: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=80&q=80',
+        macros: { calories: 530, protein: 57, fat: 8, carbs: 25, sugar: 2, sodium: 450, fiber: 10 },
+        customizations: ['飯量減半', '去糖', '加蛋白質'] as string[],
+        userRemark: '醬料需另外包裝'
       }
     ]
   },
@@ -27,7 +31,8 @@ const MOCK_DATA = [
         variant: '320 kcal, P: 30g',
         price: 130,
         quantity: 1,
-        imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=80&q=80'
+        imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=80&q=80',
+        macros: { calories: 320, protein: 30, fat: 10, carbs: 15, sugar: 3, sodium: 850, fiber: 2 }
       }
     ]
   },
@@ -41,13 +46,23 @@ const MOCK_DATA = [
         variant: '580 kcal, P: 35g',
         price: 220,
         quantity: 1,
-        imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=80&q=80'
+        imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=80&q=80',
+        macros: { calories: 580, protein: 35, fat: 18, carbs: 60, sugar: 3, sodium: 580, fiber: 7 }
       }
     ]
   }
 ];
 
-export default function ShoppingCart() {
+export interface CheckoutData {
+  itemsCount: number;
+  subtotal: number;
+}
+
+interface ShoppingCartProps {
+  onCheckout?: (data: CheckoutData) => void;
+}
+
+export default function ShoppingCart({ onCheckout }: ShoppingCartProps) {
   const [cart, setCart] = useState(MOCK_DATA);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -72,6 +87,66 @@ export default function ShoppingCart() {
       isAllSelected: allProductIds.length > 0 && selectedIds.size === allProductIds.length
     };
   }, [cart, selectedIds, allProductIds]);
+
+  // 計算選中項目的營養素總和
+  const totalMacros = useMemo(() => {
+    const totals = { calories: 0, protein: 0, fat: 0, carbs: 0, sugar: 0, sodium: 0, fiber: 0 };
+    cart.forEach(store => {
+      store.products.forEach(p => {
+        if (selectedIds.has(p.id) && p.macros) {
+          totals.calories += p.macros.calories * p.quantity;
+          totals.protein += p.macros.protein * p.quantity;
+          totals.fat += p.macros.fat * p.quantity;
+          totals.carbs += p.macros.carbs * p.quantity;
+          totals.sugar += p.macros.sugar * p.quantity;
+          totals.sodium += p.macros.sodium * p.quantity;
+          totals.fiber += p.macros.fiber * p.quantity;
+        }
+      });
+    });
+    return totals;
+  }, [cart, selectedIds]);
+
+  // 這裡依需求暫時建立 Mock 的當日狀態（若未來 ShoppingCart 透過 props 接收可直接替換）
+  const userProfile = { tdee: 2000 };
+  const dailyIntake = 1200;
+
+  // 動態健康評語邏輯
+  const feedbackMessages = useMemo(() => {
+    if (selectedIds.size === 0) return [];
+    
+    // 呼叫智能警示邏輯
+    const messages = generateHealthWarnings(
+      { calories: totalMacros.calories, macros: totalMacros },
+      userProfile,
+      dailyIntake
+    );
+    
+    // 將基礎評語加到最前面
+    messages.unshift({
+      type: 'base',
+      text: `這餐共 ${totalMacros.calories} 大卡，蛋白質 ${totalMacros.protein}g。`,
+      color: 'text-gray-700 font-bold'
+    });
+
+    if (totalMacros.fiber > 10) {
+      messages.push({
+        type: 'success',
+        text: '✨ 膳食纖維豐富，有助腸胃健康！',
+        color: 'text-teal-600 font-medium'
+      });
+    }
+
+    if (totalMacros.carbs < 40 && totalMacros.carbs > 0) {
+      messages.push({
+        type: 'info',
+        text: '📉 適合低碳飲食日。',
+        color: 'text-blue-600 font-medium'
+      });
+    }
+
+    return messages;
+  }, [totalMacros, selectedIds]);
 
   // 單一商品 Toggle
   const toggleProduct = (id: string) => {
@@ -198,7 +273,14 @@ export default function ShoppingCart() {
                       />
                       <img src={product.imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
                       <div className="flex flex-col overflow-hidden">
-                        <span className="text-gray-900 truncate mb-2 font-medium">{product.name}</span>
+                        <span className="text-gray-900 truncate mb-1 font-medium">{product.name}</span>
+                        {('customizations' in product || 'userRemark' in product) && (
+                          <div className="text-gray-500 text-xs mb-1.5 font-medium leading-tight whitespace-normal">
+                            {[...((product as any).customizations || []), (product as any).userRemark ? `備註: ${(product as any).userRemark}` : null]
+                              .filter(Boolean)
+                              .join(' / ')}
+                          </div>
+                        )}
                         <div className="flex items-center">
                            <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded inline-block w-max border border-orange-100">
                             🔥 {product.variant.split(',')[0]}
@@ -269,7 +351,24 @@ export default function ShoppingCart() {
       </div>
 
       {/* Sticky Bottom Checkout Bar */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-10 w-full rounded-t-xl -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12">
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-10 w-full rounded-t-xl -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 flex flex-col">
+        {/* Smart Nutrition Feedback */}
+        {selectedIds.size > 0 && (
+          <div className="w-full flex justify-center py-3 bg-teal-50/50 border-b border-teal-100 px-4 gap-4 flex-wrap text-sm">
+            {feedbackMessages.map((msg, idx) => (
+              <span key={idx} className={`flex items-center gap-1 bg-white px-2 py-1 rounded shadow-sm border ${
+                msg.type === 'danger' ? 'border-red-100' :
+                msg.type === 'warning' ? 'border-orange-100' :
+                msg.type === 'success' ? 'border-teal-100' :
+                msg.type === 'info' ? 'border-blue-100' : 'border-gray-100'
+              } ${msg.color}`}>
+                {msg.type === 'danger' && <AlertTriangle className="w-4 h-4" />}
+                {msg.text}
+              </span>
+            ))}
+          </div>
+        )}
+
         <div className="w-full flex justify-between items-center py-4 max-w-[1200px] mx-auto">
           
           <div className="flex items-center gap-6">
@@ -301,6 +400,8 @@ export default function ShoppingCart() {
               </div>
             </div>
             <button 
+              onClick={() => onCheckout?.({ itemsCount: totalCount, subtotal: totalPrice })}
+              disabled={selectedIds.size === 0}
               className={`px-10 py-3.5 rounded-xl text-lg font-bold transition-all shadow-sm ${
                 selectedIds.size > 0 
                   ? 'bg-teal-500 text-white hover:bg-teal-600 active:scale-95' 

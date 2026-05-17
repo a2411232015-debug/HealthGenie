@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { ICONS, MOCK_STATS } from '../constants';
 import { MealRecommendation, UserProfile } from '../types';
-import { calculateHealthTargets } from '../utils/health';
-import { MapPin, Navigation, Info, SlidersHorizontal, X, Check } from 'lucide-react';
+import { calculateHealthTargets, generateHealthWarnings } from '../utils/health';
+import { MapPin, Navigation, Info, SlidersHorizontal, X, Check, Store, Minus, Plus, ShoppingCart, AlertTriangle } from 'lucide-react';
 
 interface MealPlanProps {
   userProfile: UserProfile;
@@ -19,6 +19,15 @@ interface FilterState {
 export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
   // Filters State
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<MealRecommendation | null>(null);
+  
+  // Customization States
+  const [mealQuantity, setMealQuantity] = useState(1);
+  const [baseOption, setBaseOption] = useState<string>('正常飯量');
+  const [flavorOptions, setFlavorOptions] = useState<string[]>([]);
+  const [extraOptions, setExtraOptions] = useState<string[]>([]);
+  const [userRemark, setUserRemark] = useState<string>('');
+
   const [filters, setFilters] = useState<FilterState>({
     maxPrice: 300,
     maxDistance: 3,
@@ -30,9 +39,41 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
   const [draftFilters, setDraftFilters] = useState<FilterState>(filters);
 
   // Calculate Target and Remaining Budget
-  const { dailyCalories } = useMemo(() => calculateHealthTargets(userProfile), [userProfile]);
+  const { dailyCalories, tdee } = useMemo(() => calculateHealthTargets(userProfile), [userProfile]);
   const consumedCalories = MOCK_STATS.calories.current;
   const remainingBudget = Math.max(0, dailyCalories - consumedCalories);
+
+  // Dynamic Macro & Price Calculation
+  const dynamicMeal = useMemo(() => {
+    if (!selectedMeal) return null;
+    let price = selectedMeal.price;
+    let calories = selectedMeal.calories ?? 0;
+    const macros = { ...(selectedMeal.macros || { protein: 0, fat: 0, carbs: 0, sugar: 0, sodium: 0, fiber: 0 }) };
+
+    if (baseOption === '飯量減半') {
+      macros.carbs = Math.max(0, macros.carbs - 20);
+      calories = Math.max(0, calories - 100);
+    }
+
+    if (extraOptions.includes('加蛋白質')) {
+      price += 30;
+      macros.protein += 15;
+      calories += 80;
+    }
+    
+    if (extraOptions.includes('增加蔬菜')) {
+      price += 20;
+      macros.fiber += 4;
+    }
+
+    return { ...selectedMeal, price, calories, macros };
+  }, [selectedMeal, baseOption, extraOptions]);
+
+  // Modal Health Warnings
+  const mealWarnings = useMemo(() => {
+    if (!dynamicMeal) return [];
+    return generateHealthWarnings(dynamicMeal, { tdee }, consumedCalories);
+  }, [dynamicMeal, tdee, consumedCalories]);
 
   // ==========================================
   // 推薦排序與過濾邏輯
@@ -83,6 +124,19 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
   const applyFilters = () => {
     setFilters(draftFilters);
     setIsFilterOpen(false);
+  };
+
+  const openMealModal = (meal: MealRecommendation) => {
+    setSelectedMeal(meal);
+    setMealQuantity(1);
+    setBaseOption('正常飯量');
+    setFlavorOptions([]);
+    setExtraOptions([]);
+    setUserRemark('');
+  };
+
+  const closeMealModal = () => {
+    setSelectedMeal(null);
   };
 
   return (
@@ -251,7 +305,11 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {recommendedMeals.map((meal) => (
-            <div key={meal.id} className="group bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 flex flex-col">
+            <div 
+              key={meal.id} 
+              onClick={() => openMealModal(meal)}
+              className="group bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 flex flex-col cursor-pointer"
+            >
               {/* Image Section */}
               <div className="relative h-48 overflow-hidden bg-slate-100">
                 <img
@@ -318,6 +376,215 @@ export const MealPlan: React.FC<MealPlanProps> = ({ userProfile, meals }) => {
           ))}
         </div>
       )}
+
+      {/* Meal Detail Modal */}
+      {selectedMeal && dynamicMeal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white text-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            
+            {/* Modal Header / Image - Fixed height */}
+            <div className="relative h-48 bg-slate-100 flex-shrink-0">
+              <img src={dynamicMeal.imageUrl} alt={dynamicMeal.name} className="w-full h-full object-cover" />
+              <button 
+                onClick={closeMealModal}
+                className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-md transition-colors z-10"
+                title="關閉"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable Content Body */}
+            <div className="p-6 bg-white overflow-y-auto flex-1">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">{dynamicMeal.name}</h3>
+                  <p className="text-gray-500 text-sm flex items-center gap-1 mt-1">
+                    <Store className="w-4 h-4" /> {dynamicMeal.merchant}
+                  </p>
+                </div>
+                <div className="text-2xl font-bold text-emerald-600">
+                  ${dynamicMeal.price}
+                </div>
+              </div>
+
+              {/* Nutrition Grid */}
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <h4 className="text-sm font-bold text-gray-700 mb-3 text-center border-b border-gray-200 pb-2">詳細營養標示</h4>
+                <div className="grid grid-cols-3 gap-y-4 gap-x-2 text-center text-sm">
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 text-xs">熱量</span>
+                    <span className="font-bold text-teal-600">{dynamicMeal.calories ?? 0} <span className="text-[10px]">kcal</span></span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 text-xs">蛋白質</span>
+                    <span className="font-bold text-teal-600">{dynamicMeal.macros?.protein ?? 0} <span className="text-[10px]">g</span></span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 text-xs">碳水</span>
+                    <span className="font-bold text-teal-600">{dynamicMeal.macros?.carbs ?? 0} <span className="text-[10px]">g</span></span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 text-xs">脂肪</span>
+                    <span className="font-bold text-teal-600">{dynamicMeal.macros?.fat ?? 0} <span className="text-[10px]">g</span></span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 text-xs">糖</span>
+                    <span className="font-bold text-teal-600">{dynamicMeal.macros?.sugar ?? 0} <span className="text-[10px]">g</span></span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 text-xs">鈉</span>
+                    <span className="font-bold text-teal-600">{dynamicMeal.macros?.sodium ?? 0} <span className="text-[10px]">mg</span></span>
+                  </div>
+                  <div className="flex flex-col col-span-3 mt-1 pt-2 border-t border-gray-200">
+                    <span className="text-gray-500 text-xs">膳食纖維</span>
+                    <span className="font-bold text-teal-600">{dynamicMeal.macros?.fiber ?? 0} <span className="text-[10px]">g</span></span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Customization Options */}
+              <div className="mb-6 space-y-5">
+                {/* 飯量/基底 */}
+                <div>
+                  <h4 className="text-sm font-bold text-gray-700 mb-2">飯量/基底 (單選)</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {['正常飯量', '飯量減半', '換成糙米'].map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => setBaseOption(opt)}
+                        className={`px-3 py-1.5 rounded-lg text-sm border font-medium transition-colors ${
+                          baseOption === opt 
+                            ? 'bg-teal-50 border-teal-500 text-teal-700 shadow-sm' 
+                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 調味微調 */}
+                <div>
+                  <h4 className="text-sm font-bold text-gray-700 mb-2">調味微調</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {['醬料分開', '少鹽', '少油', '去糖'].map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => {
+                          setFlavorOptions(prev => 
+                            prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt]
+                          );
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-sm border font-medium transition-colors ${
+                          flavorOptions.includes(opt)
+                            ? 'bg-teal-50 border-teal-500 text-teal-700 shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 營養加料 */}
+                <div>
+                  <h4 className="text-sm font-bold text-gray-700 mb-2">營養加料</h4>
+                  <div className="flex flex-col gap-2">
+                    {[
+                      { label: '加蛋白質 (+$30, +15g P, +80kcal)', val: '加蛋白質' },
+                      { label: '增加蔬菜 (+$20, +4g Fiber)', val: '增加蔬菜' }
+                    ].map(opt => (
+                      <label key={opt.val} className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors ${extraOptions.includes(opt.val) ? 'border-teal-500 bg-teal-50/30' : 'border-gray-200'}`}>
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 accent-teal-500 cursor-pointer rounded border-gray-300 focus:ring-teal-500 focus:ring-2"
+                          checked={extraOptions.includes(opt.val)}
+                          onChange={(e) => {
+                            if (e.target.checked) setExtraOptions(prev => [...prev, opt.val]);
+                            else setExtraOptions(prev => prev.filter(x => x !== opt.val));
+                          }}
+                        />
+                        <span className="text-sm font-medium text-gray-700 flex-1">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 自訂備註 */}
+                <div>
+                  <h4 className="text-sm font-bold text-gray-700 mb-2">自訂備註</h4>
+                  <input
+                    type="text"
+                    value={userRemark}
+                    onChange={(e) => setUserRemark(e.target.value)}
+                    placeholder="例如：不加蔥、白飯不要太軟..."
+                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder-gray-400"
+                  />
+                </div>
+              </div>
+
+              {/* Health Warnings */}
+              {mealWarnings.length > 0 && (
+                <div className="mb-6 space-y-2">
+                  {mealWarnings.map((warning, idx) => (
+                    <div key={idx} className={`text-sm flex items-start gap-2 p-3 border rounded-xl ${
+                      warning.type === 'danger' ? 'bg-red-50 text-red-600 border-red-100' :
+                      warning.type === 'warning' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                      warning.type === 'info' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                      'bg-slate-50 text-slate-600 border-slate-100'
+                    }`}>
+                      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                      <span className="font-medium">{warning.text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Actions Footer Always visible */}
+              <div className="pt-2">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center border border-slate-200 rounded-xl bg-white p-1 shrink-0">
+                    <button 
+                      onClick={() => setMealQuantity(Math.max(1, mealQuantity - 1))}
+                      className="p-3 text-slate-500 hover:text-teal-600 hover:bg-teal-50 rounded"
+                    >
+                      <Minus className="w-5 h-5" />
+                    </button>
+                    <div className="w-8 text-center font-bold text-slate-700">{mealQuantity}</div>
+                    <button 
+                      onClick={() => setMealQuantity(mealQuantity + 1)}
+                      className="p-3 text-slate-500 hover:text-teal-600 hover:bg-teal-50 rounded"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      // 打包的商品物件包含 customizations 與 userRemark (供 ShoppingCart 使用)
+                      const cartPayload = {
+                         ...dynamicMeal,
+                         quantity: mealQuantity,
+                         customizations: [baseOption !== '正常飯量' ? baseOption : null, ...flavorOptions, ...extraOptions].filter(Boolean),
+                         userRemark
+                      };
+                      console.log('Added to cart:', cartPayload);
+                      closeMealModal();
+                    }}
+                    className="flex-1 py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 shadow-lg shadow-teal-500/30"
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    加入購物車 - ${(dynamicMeal.price * mealQuantity).toLocaleString()}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

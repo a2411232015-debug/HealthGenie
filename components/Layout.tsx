@@ -78,7 +78,7 @@ export const Layout: React.FC<LayoutProps> = ({ currentTab, onTabChange, childre
       </main>
 
       {/* Mobile Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 flex justify-around p-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <div className={`md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 flex justify-around p-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] ${currentTab === AppTab.CHECKOUT ? 'hidden' : ''}`}>
         {[
           { tab: AppTab.DASHBOARD, label: "概覽", icon: ICONS.Dashboard },
           { tab: AppTab.MEAL_PLAN, label: "推薦", icon: ICONS.MealPlan },

@@ -62,3 +62,43 @@ export const calculateHealthTargets = (profile: UserProfile): HealthTargets => {
     macros
   };
 };
+
+export interface HealthWarning {
+  type: 'base' | 'info' | 'success' | 'warning' | 'danger';
+  text: string;
+  color: string;
+}
+
+export const generateHealthWarnings = (
+  meal: { calories: number; macros: { sodium?: number; carbs?: number; fiber?: number; protein?: number; sugar?: number; } },
+  userProfile: { tdee: number },
+  dailyIntake: number
+): HealthWarning[] => {
+  const warnings: HealthWarning[] = [];
+  
+  if ((meal.macros.sodium ?? 0) > 800) {
+    warnings.push({
+      type: 'warning',
+      text: '⚠️ 此餐鈉含量較高，不建議高血壓族群頻繁食用。',
+      color: 'text-orange-600 font-medium'
+    });
+  }
+
+  if ((meal.macros.carbs ?? 0) > 60) {
+    warnings.push({
+      type: 'warning',
+      text: '⚠️ 此餐碳水偏高，控糖者建議減少飯量。',
+      color: 'text-yellow-600 font-medium'
+    });
+  }
+
+  if (dailyIntake + meal.calories >= userProfile.tdee * 0.85) {
+    warnings.push({
+      type: 'danger',
+      text: '🛑 加總此餐後，你今天將攝取超過熱量預算 85%！',
+      color: 'text-red-600 font-bold'
+    });
+  }
+
+  return warnings;
+};

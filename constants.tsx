@@ -125,7 +125,7 @@ export const MOCK_MEALS: MealRecommendation[] = [
     merchant: 'Muscle Fuel 健康餐',
     distance: 0.3,
     calories: 450,
-    macros: { protein: 42, fat: 8, carbs: 45 },
+    macros: { protein: 42, fat: 8, carbs: 45, sugar: 2, sodium: 450, fiber: 6 },
     imageUrl: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=800&q=80',
     price: 160
   },
@@ -135,7 +135,7 @@ export const MOCK_MEALS: MealRecommendation[] = [
     merchant: 'Daily Fresh 輕食',
     distance: 1.2,
     calories: 580,
-    macros: { protein: 35, fat: 18, carbs: 60 },
+    macros: { protein: 35, fat: 18, carbs: 60, sugar: 3, sodium: 580, fiber: 7 },
     imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
     price: 220
   },
@@ -145,7 +145,7 @@ export const MOCK_MEALS: MealRecommendation[] = [
     merchant: '老張健康滷',
     distance: 0.5,
     calories: 320,
-    macros: { protein: 30, fat: 10, carbs: 15 },
+    macros: { protein: 30, fat: 10, carbs: 15, sugar: 3, sodium: 850, fiber: 2 },
     imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
     price: 130
   },
@@ -155,7 +155,7 @@ export const MOCK_MEALS: MealRecommendation[] = [
     merchant: 'Halo Poke',
     distance: 0.8,
     calories: 480,
-    macros: { protein: 28, fat: 12, carbs: 55 },
+    macros: { protein: 28, fat: 12, carbs: 55, sugar: 6, sodium: 620, fiber: 5 },
     imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
     price: 190
   },
@@ -165,7 +165,7 @@ export const MOCK_MEALS: MealRecommendation[] = [
     merchant: 'Burger Fit',
     distance: 2.5,
     calories: 520,
-    macros: { protein: 45, fat: 25, carbs: 10 },
+    macros: { protein: 45, fat: 25, carbs: 10, sugar: 2, sodium: 680, fiber: 3 },
     imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80',
     price: 200
   },
@@ -175,7 +175,7 @@ export const MOCK_MEALS: MealRecommendation[] = [
     merchant: 'Green Day',
     distance: 0.4,
     calories: 280,
-    macros: { protein: 12, fat: 15, carbs: 30 },
+    macros: { protein: 12, fat: 15, carbs: 30, sugar: 4, sodium: 320, fiber: 9 },
     imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',
     price: 150
   },
@@ -185,7 +185,7 @@ export const MOCK_MEALS: MealRecommendation[] = [
     merchant: '台味輕食光',
     distance: 1.5,
     calories: 650,
-    macros: { protein: 35, fat: 25, carbs: 65 },
+    macros: { protein: 35, fat: 25, carbs: 65, sugar: 12, sodium: 950, fiber: 4 },
     imageUrl: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=800&q=80',
     price: 120
   },
@@ -195,7 +195,7 @@ export const MOCK_MEALS: MealRecommendation[] = [
     merchant: 'Yogurt House',
     distance: 0.6,
     calories: 350,
-    macros: { protein: 25, fat: 5, carbs: 40 },
+    macros: { protein: 25, fat: 5, carbs: 40, sugar: 15, sodium: 120, fiber: 5 },
     imageUrl: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=800&q=80',
     price: 140
   }

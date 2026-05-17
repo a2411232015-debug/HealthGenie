@@ -4,7 +4,8 @@ import { Dashboard } from './components/Dashboard';
 import { MealPlan } from './components/MealPlan';
 import { Profile } from './components/Profile';
 import { AdminPanel } from './components/AdminPanel';
-import ShoppingCart from './components/ShoppingCart';
+import ShoppingCart, { CheckoutData } from './components/ShoppingCart';
+import Checkout from './components/Checkout';
 import { ActivityLevel, AppTab, Gender, UserProfile, MealRecommendation, DailyStats, WeightData } from './types';
 import { MOCK_MEALS, MOCK_STATS } from './constants';
 
@@ -13,18 +14,20 @@ const INITIAL_PROFILE: UserProfile = {
   age: 28,
   height: 175,
   weight: 70,
+  targetWeight: 65,
   activityLevel: ActivityLevel.MODERATE,
 };
 
-const INITIAL_WEIGHT_HISTORY: WeightData[] = [
-  { date: '12/20', weight: 71.5 },
-  { date: '12/21', weight: 71.2 },
-  { date: '12/22', weight: 71.0 },
-  { date: '12/23', weight: 70.8 },
-  { date: '12/24', weight: 70.5 },
-  { date: '12/25', weight: 70.2 },
-  { date: '今日', weight: 70.0 },
-];
+const INITIAL_WEIGHT_HISTORY: WeightData[] = Array.from({ length: 90 }).map((_, i) => {
+  const d = new Date();
+  d.setDate(d.getDate() - (89 - i));
+  const isToday = i === 89;
+  return {
+    date: isToday ? '今日' : `${d.getMonth() + 1}/${d.getDate()}`,
+    weight: Number((78 - (i * 0.08) + (Math.random() * 0.5 - 0.25)).toFixed(1))
+  };
+});
+INITIAL_WEIGHT_HISTORY[89].weight = 70.0;
 
 const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<AppTab>(AppTab.DASHBOARD);
@@ -37,7 +40,19 @@ const App: React.FC = () => {
 
   const [meals, setMeals] = useState<MealRecommendation[]>(() => {
     const saved = localStorage.getItem('meals');
-    return saved ? JSON.parse(saved) : MOCK_MEALS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // 防呆：若舊版快取中的資料缺少營養素擴充（例如 sugar），則強制載入最新的 MOCK_MEALS
+        if (parsed.length > 0 && parsed[0].macros?.sugar === undefined) {
+          return MOCK_MEALS;
+        }
+        return parsed;
+      } catch (e) {
+        return MOCK_MEALS;
+      }
+    }
+    return MOCK_MEALS;
   });
 
   const [dailyStats, setDailyStats] = useState<DailyStats>(() => {
@@ -47,10 +62,20 @@ const App: React.FC = () => {
 
   const [weightHistory, setWeightHistory] = useState<WeightData[]>(() => {
     const saved = localStorage.getItem('weightHistory');
-    return saved ? JSON.parse(saved) : INITIAL_WEIGHT_HISTORY;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.length < 90) return INITIAL_WEIGHT_HISTORY;
+        return parsed;
+      } catch (e) {
+        return INITIAL_WEIGHT_HISTORY;
+      }
+    }
+    return INITIAL_WEIGHT_HISTORY;
   });
 
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
+  const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
 
   // -- Persistence Effects --
   useEffect(() => { localStorage.setItem('userProfile', JSON.stringify(userProfile)); }, [userProfile]);
@@ -81,7 +106,7 @@ const App: React.FC = () => {
           newHistory[newHistory.length - 1] = { date: '今日', weight: newProfile.weight };
           return [...newHistory];
         }
-        return [...newHistory, { date: '今日', weight: newProfile.weight }].slice(-7);
+        return [...newHistory, { date: '今日', weight: newProfile.weight }].slice(-90);
       });
     }
     setUserProfile(newProfile);
@@ -110,7 +135,21 @@ const App: React.FC = () => {
       case AppTab.MEAL_PLAN:
         return <MealPlan userProfile={userProfile} meals={meals} />;
       case AppTab.SHOPPING_CART:
-        return <ShoppingCart />;
+        return (
+          <ShoppingCart 
+            onCheckout={(data) => {
+              setCheckoutData(data);
+              setCurrentTab(AppTab.CHECKOUT);
+            }} 
+          />
+        );
+      case AppTab.CHECKOUT:
+        return (
+          <Checkout 
+            data={checkoutData}
+            onBack={() => setCurrentTab(AppTab.SHOPPING_CART)} 
+          />
+        );
       case AppTab.PROFILE:
         return (
           <Profile
